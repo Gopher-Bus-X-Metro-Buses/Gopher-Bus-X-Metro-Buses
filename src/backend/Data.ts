@@ -1,6 +1,11 @@
 import GtfsRealtimeBindings from 'gtfs-realtime-bindings';
-import Hash from './Hash.ts';
+import Hash from './hash/Hash.ts';
+import MetroGTFS from './gtfs/MetroGTFS.ts';
 import JSZip from "jszip";
+
+interface Data {
+
+}
 
 namespace Data {
     
@@ -23,24 +28,6 @@ namespace Data {
             alert( "Couldn't open OPFS. See browser console.\n\n" + err );
             return;
         }
-
-        // Checks if the data in the contents are old, if they are, refresh the cache
-        caches.open("gtfs-static").then(cache => cache.match(GTFS_STATIC_URL).then(async response => {
-            // Checks if the data exists in the cache, if not, refresh it
-            if (response) {
-                // Checks if the data in the contents are old, if they are, refresh the cache
-                // @ts-ignore
-                response.arrayBuffer().then(buffer => JSZip.loadAsync(buffer).then(zip => zip.file("feed_info.txt").async("string").then(contents => {
-                    const date = new Date() // Today's Date
-                    
-                    // Compare the old date to the new date, formatted in (yyyymmdd)
-                    if (Number(contents.split("\r\n")[1].split(",")[5]) < Number([date.getFullYear(), date.getMonth(), date.getDate()].join())) {
-                        // Refresh if old
-                        refreshStaticGTFSCache()  
-                    }
-                })))
-            }
-        }))
 
         // Load hashes
         await loadHash<Number>("trips.txt", 0);
@@ -68,7 +55,6 @@ namespace Data {
      * Gets a bufferArray promise of the data from the server
      */
     export async function getStaticGTFS() : Promise<ArrayBuffer | undefined> {
-        // test();
         if (!window.caches) { 
             // If caching does not exist on the browser, just return the data from the server
             console.warn("This browser does not support Cache!")
@@ -175,6 +161,8 @@ namespace Data {
     const GTFS_REALTIME_URL_VEHICLE_POSITIONS = 'https://svc.metrotransit.org/mtgtfs/vehiclepositions.pb';
     const GTFS_REALTIME_URL_TRIP_UPDATES = 'https://svc.metrotransit.org/mtgtfs/tripupdates.pb';
     const GTFS_REALTIME_URL_SERVICE_ALERTS = 'https://svc.metrotransit.org/mtgtfs/alerts.pb';
+
+    const Metro = new MetroGTFS();
 }
 
 export default Data
